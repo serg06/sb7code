@@ -75,6 +75,9 @@ public:
 
 		// tell OpenGL to draw us HUGE POINTS :)
 		glPointSize(40.0f);
+
+		// set polygon mode for everything to lines -- i.e. just draw outlines
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
 	void shutdown() {
@@ -101,13 +104,9 @@ public:
 		//vec4(0.0, 0.8, 1.0, 1.0);
 		glVertexAttrib4fv(1, shape_color); // 1 = vs_color
 
-		// set polygon mode for everything to lines -- i.e. just draw outlines
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 		// draw triangle
-		glDrawArrays(GL_TRIANGLES, 0, 3); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
+		glDrawArrays(GL_PATCHES, 0, 3); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
 	}
-
 
 private:
 	GLuint rendering_program;
@@ -120,9 +119,9 @@ private:
 
 		// list of shader names to include in program
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.vs.glsl", GL_VERTEX_SHADER));
+		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tcs.glsl", GL_TESS_CONTROL_SHADER));
+		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tes.glsl", GL_TESS_EVALUATION_SHADER));
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.fs.glsl", GL_FRAGMENT_SHADER));
-		//shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tcs.glsl", GL_TESS_CONTROL_SHADER));
-		//shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tes.glsl", GL_TESS_EVALUATION_SHADER));
 		//shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.gs.glsl", GL_GEOMETRY_SHADER));
 
 		// for each input shader
