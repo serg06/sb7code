@@ -33,6 +33,7 @@
 #include <fstream>
 #include <streambuf>
 #include <list> 
+#include <vector> 
 #include <iterator> 
 #include <tuple> 
 
@@ -149,6 +150,25 @@ private:
 			glShaderSource(shader, 1, &shader_src_ptr, NULL); // set shader source code
 			glCompileShader(shader); // compile shader
 
+			// CHECK IF COMPILATION SUCCESSFUL
+			GLint status = GL_TRUE;
+			glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+			if (status == GL_FALSE)
+			{
+				GLint logLen;
+				glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLen);
+				std::vector <char> log(logLen);
+				GLsizei written;
+				glGetShaderInfoLog(shader, logLen, &written, log.data());
+
+				OutputDebugString("compilation error with shader ");
+				OutputDebugString(fname.c_str());
+				OutputDebugString(":\n\n");
+				OutputDebugString(log.data());
+				OutputDebugString("\n");
+				exit(1);
+			}
+
 			// Close file, save shader for later
 			shader_file.close();
 			shaders.push_back(shader);
@@ -164,6 +184,22 @@ private:
 
 		glLinkProgram(program); // link together all attached shaders
 
+		// CHECK IF LINKING SUCCESSFUL
+		GLint status = GL_TRUE;
+		glGetProgramiv(program, GL_LINK_STATUS, &status);
+		if (status == GL_FALSE)
+		{
+			GLint logLen;
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLen);
+			std::vector <char> log(logLen);
+			GLsizei written;
+			glGetProgramInfoLog(program, logLen, &written, log.data());
+
+			OutputDebugString("linking error with program:\n\n");
+			OutputDebugString(log.data());
+			OutputDebugString("\n");
+			exit(1);
+		}
 
 		// Delete the shaders as the program has them now
 		for (const GLuint &shader : shaders) {
