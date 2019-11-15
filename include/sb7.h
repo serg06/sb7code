@@ -339,7 +339,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,           \
     delete app;                                     \
     return 0;                                       \
 }
-#elif defined _LINUX || defined __APPLE__
+#elif defined _LINUX || defined __APPLE__ || defined __unix__
 #define DECLARE_MAIN(a)                             \
 int main(int argc, const char ** argv)              \
 {                                                   \
