@@ -1,3 +1,18 @@
 bin/
 build/
 *.txt.user
+
+# my ignores
+
+# cmake garbage
+CMakeFiles/
+
+# cmake glfw
+extern/glfw-3.0.4/GLFW.v12.suo
+lib/glfw3.lib
+lib/glfw3_d.lib
+
+# idk, maybe from compiling debug version of app
+lib/sb7_d.lib
+
+
