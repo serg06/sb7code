@@ -32,6 +32,12 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <list> 
+#include <iterator> 
+#include <tuple> 
+
+
+#define M_PI 3.14159265358979323846
 
 class simpleclear_app : public sb7::application
 {
@@ -61,14 +67,6 @@ public:
 	}
 
 	void startup() {
-		//// print working directory
-		//char pBuf[256];
-		//size_t len = sizeof(pBuf);
-		//int bytes = GetModuleFileName(NULL, pBuf, len);
-
-		//// print files in current dir
-		//read_directory(".");
-
 		rendering_program = compile_shaders();
 
 		// useless for now, just need to have at least one VAO (Vertex Array Object) so glsl allows us to call draw-vertex functions
@@ -85,23 +83,28 @@ public:
 		glDeleteProgram(rendering_program);
 		glDeleteVertexArrays(1, &vertex_array_object); // why twice?
 	}
-
-	virtual void render_simpleclear(double currentTime)
-	{
-		const GLfloat color[] = { (float)sin(currentTime) * 0.5f + 0.5f, (float)cos(currentTime) * 0.5f + 0.5f, 0.0f, 1.0f };
-		glClearBufferfv(GL_COLOR, 0, color);
-	}
-
+	
+	// execute shaders and actually draw on screen!
 	virtual void render(double currentTime) {
-		// execute shaders and actually draw on screen!
-
 		// fill buffer with red
 		const GLfloat color[] = { (float)sin(currentTime) * 0.5f + 0.5f, (float)cos(currentTime) * 0.5f + 0.5f, 0.0f, 1.0f };
-		//const GLfloat color[] = { 0.0f, 0.2f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
-		glUseProgram(rendering_program); // use our program object for rendering
-		//glDrawArrays(GL_POINTS, 0, 1); // call our drawing command -- draw 1 point for every vertex array -- so just 1 point
+		// use our program object for rendering
+		glUseProgram(rendering_program);
+
+		// set input vertex attributes for vertex shader
+		const GLfloat offset[] = { (float)sin(currentTime) * 0.5f, (float)cos(currentTime) * -0.6f, 0.0f, 0.0f };
+		glVertexAttrib4fv(0, offset); // 0 = offset
+		
+		const GLfloat shape_color[] = { (float)sin(currentTime+M_PI) * 0.5f + 0.5f, (float)cos(currentTime+M_PI) * 0.5f + 0.5f, 0.0f, 1.0f };
+		//vec4(0.0, 0.8, 1.0, 1.0);
+		glVertexAttrib4fv(1, shape_color); // 1 = vs_color
+
+		// set polygon mode for everything to lines -- i.e. just draw outlines
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		// draw triangle
 		glDrawArrays(GL_TRIANGLES, 0, 3); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
 	}
 
@@ -111,51 +114,68 @@ private:
 	GLuint vertex_array_object;
 
 	GLuint compile_shaders(void) {
-		GLuint vertex_shader;
-		GLuint fragment_shader;
 		GLuint program;
+		std::list <std::tuple<std::string, GLenum>> shader_fnames;
+		std::list <GLuint> shaders; // store compiled shaders
 
-		std::ifstream vshader_file("../src/simpleclear/simple.vs.glsl");
-		std::ifstream fshader_file("../src/simpleclear/simple.fs.glsl");
+		// list of shader names to include in program
+		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.vs.glsl", GL_VERTEX_SHADER));
+		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.fs.glsl", GL_FRAGMENT_SHADER));
+		//shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tcs.glsl", GL_TESS_CONTROL_SHADER));
+		//shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tes.glsl", GL_TESS_EVALUATION_SHADER));
+		//shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.gs.glsl", GL_GEOMETRY_SHADER));
 
-		if (!vshader_file.is_open()) {
-			OutputDebugString("could not open vshader file\n");
-			exit(1);
+		// for each input shader
+		for (const std::tuple <std::string, GLenum> &shader_fname : shader_fnames) 
+		{
+			// extract shader info
+			const std::string fname = std::get<0>(shader_fname);
+			const GLenum shadertype = std::get<1>(shader_fname);
+
+			// load shader src
+			std::ifstream shader_file(fname);
+
+			if (!shader_file.is_open()) {
+				OutputDebugString("could not open shader file: ");
+				OutputDebugString(fname.c_str());
+				OutputDebugString("\n");
+				exit(1);
+			}
+
+			const std::string shader_src((std::istreambuf_iterator<char>(shader_file)), std::istreambuf_iterator<char>());
+			const GLchar * shader_src_ptr = shader_src.c_str();
+
+			// Create and compile shader
+			const GLuint shader = glCreateShader(shadertype); // create empty shader
+			glShaderSource(shader, 1, &shader_src_ptr, NULL); // set shader source code
+			glCompileShader(shader); // compile shader
+
+			// Close file, save shader for later
+			shader_file.close();
+			shaders.push_back(shader);
 		}
-
-		if (!fshader_file.is_open()) {
-			OutputDebugString("could not open fshader file\n");
-			exit(1);
-		}
-
-		std::string vshader_src((std::istreambuf_iterator<char>(vshader_file)), std::istreambuf_iterator<char>());
-		std::string fshader_src((std::istreambuf_iterator<char>(fshader_file)), std::istreambuf_iterator<char>());
-
-		static const GLchar * vshader_src_ptr = vshader_src.c_str();
-		static const GLchar * fshader_src_ptr = fshader_src.c_str();
-
-		// Create and compile vertex shader
-		vertex_shader = glCreateShader(GL_VERTEX_SHADER); // create empty shader
-		glShaderSource(vertex_shader, 1, &vshader_src_ptr, NULL); // set shader source code
-		glCompileShader(vertex_shader); // compile shader
-
-		// Create and compile fragment shader
-		fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragment_shader, 1, &fshader_src_ptr, NULL);
-		glCompileShader(fragment_shader);
 
 		// Create program, attach shaders to it, and link it
 		program = glCreateProgram(); // create (empty?) program
-		glAttachShader(program, vertex_shader);
-		glAttachShader(program, fragment_shader);
+
+		// attach shaders
+		for (const GLuint &shader : shaders) {
+			glAttachShader(program, shader);
+		}
+
 		glLinkProgram(program); // link together all attached shaders
 
+
 		// Delete the shaders as the program has them now
-		// ME: I think we just delete the reference; then when the program deletes its references, references drop to 0 and it gets ACTUALLY deleted.
-		glDeleteShader(vertex_shader);
-		glDeleteShader(fragment_shader);
+		for (const GLuint &shader : shaders) {
+			glDeleteShader(shader);
+		}
 
 		return program;
+	}
+
+	std::list <std::ifstream> wew(void) {
+		// open all our shader files and return them in a list
 	}
 };
 
