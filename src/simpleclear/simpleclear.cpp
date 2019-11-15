@@ -115,8 +115,8 @@ private:
 		GLuint fragment_shader;
 		GLuint program;
 
-		std::ifstream vshader_file("../build/simple.vs.glsl");
-		std::ifstream fshader_file("../build/simple.fs.glsl");
+		std::ifstream vshader_file("../src/simpleclear/simple.vs.glsl");
+		std::ifstream fshader_file("../src/simpleclear/simple.fs.glsl");
 
 		if (!vshader_file.is_open()) {
 			OutputDebugString("could not open vshader file\n");
