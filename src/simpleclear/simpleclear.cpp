@@ -75,7 +75,7 @@ public:
 		glBindVertexArray(vertex_array_object);
 
 		// big points
-		glPointSize(5.0f);
+		glPointSize(15.0f);
 
 		// set polygon mode for everything to lines -- i.e. just draw outlines
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
