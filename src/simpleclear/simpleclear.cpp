@@ -74,8 +74,8 @@ public:
 		glCreateVertexArrays(1, &vertex_array_object);
 		glBindVertexArray(vertex_array_object);
 
-		// tell OpenGL to draw us HUGE POINTS :)
-		glPointSize(40.0f);
+		// big points
+		glPointSize(5.0f);
 
 		// set polygon mode for everything to lines -- i.e. just draw outlines
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -123,7 +123,7 @@ private:
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tcs.glsl", GL_TESS_CONTROL_SHADER));
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tes.glsl", GL_TESS_EVALUATION_SHADER));
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.fs.glsl", GL_FRAGMENT_SHADER));
-		//shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.gs.glsl", GL_GEOMETRY_SHADER));
+		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.gs.glsl", GL_GEOMETRY_SHADER));
 
 		// for each input shader
 		for (const std::tuple <std::string, GLenum> &shader_fname : shader_fnames) 
