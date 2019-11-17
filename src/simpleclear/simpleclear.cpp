@@ -52,21 +52,6 @@ public:
 		memcpy(info.title, title, sizeof(title));
 	}
 
-	void read_directory(const std::string& name)
-	{
-		std::string pattern(name);
-		pattern.append("\\*");
-		WIN32_FIND_DATA data;
-		HANDLE hFind;
-		if ((hFind = FindFirstFile(pattern.c_str(), &data)) != INVALID_HANDLE_VALUE) {
-			do {
-				OutputDebugString(data.cFileName);
-				OutputDebugString("");
-			} while (FindNextFile(hFind, &data) != 0);
-			FindClose(hFind);
-		}
-	}
-
 	void startup() {
 		rendering_program = compile_shaders();
 
