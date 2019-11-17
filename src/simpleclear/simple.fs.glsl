@@ -1,12 +1,13 @@
 #version 450 core
 
+in vec4 vs_color;
 out vec4 color;
 
 void main(void)
 {
 
 
-	color = vec4(0.3, 0.0, 0.8, 1.0);
+	color = vs_color;
 
 // COOL RANDOM COLORS; but my eyes hurt.
 //	// The beauty of this algorithm, is that super-nearby pixels are similar in color!	

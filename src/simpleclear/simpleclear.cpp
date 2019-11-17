@@ -133,10 +133,10 @@ public:
 
 		// Projection matrix
 		vmath::mat4 proj_matrix = vmath::perspective(
-			59.0, // 59.0 vfov = 90.0 hfov
-			800.0 / 600.0,  // aspect ratio - not sure if right
-			0.1,  // can't see behind 0.0 anyways
-			1000.0 // our object will be closer than 100.0
+			40.0f, // 59.0 vfov = 90.0 hfov
+			800.0f / 600.0f,  // aspect ratio - not sure if right
+			0.1f,  // can't see behind 0.0 anyways
+			-1000.0f // our object will be closer than 100.0
 			);
 
 		// Now then, create 2 buffers: 1 for Uniform Block (transformations), 1 for input vertices.
@@ -164,7 +164,7 @@ public:
 		glVertexArrayAttribBinding(vertex_array_object, attrib_idx, vert_binding_idx);
 
 		// Bind buffer to that binding now
-		glVertexArrayVertexBuffer(vertex_array_object, vert_binding_idx, vertices_buffer, 0, 3 * sizeof(float)); // god I hope sizeof(float) works.
+		glVertexArrayVertexBuffer(vertex_array_object, vert_binding_idx, vertices_buffer, 0, sizeof(vmath::vec3)); // god I hope sizeof(float) works.
 
 		// Describe layout/format of data:
 		glVertexArrayAttribFormat(vertex_array_object, attrib_idx, 3, GL_FLOAT, GL_FALSE, 0);
@@ -186,7 +186,7 @@ public:
 			GL_DYNAMIC_STORAGE_BIT // need to write to it
 			);
 
-		// Insert mv matrix
+		// Insert mv matrix (or not lmao)
 		glNamedBufferSubData(
 			uniform_buffer,
 			0,
@@ -203,7 +203,7 @@ public:
 			);
 
 		glPointSize(5.0f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		// use our program object for rendering
 		glUseProgram(rendering_program);
@@ -219,16 +219,27 @@ public:
 	// execute shaders and actually draw on screen!
 	virtual void render(double currentTime) {
 		// fill buffer with BIG COLOURS
-		const GLfloat color[] = { (float)sin(currentTime) * 0.5f + 0.5f, (float)cos(currentTime) * 0.5f + 0.5f, 0.0f, 1.0f };
+		//const GLfloat color[] = { (float)sin(currentTime) * 0.5f + 0.5f, (float)cos(currentTime) * 0.5f + 0.5f, 0.0f, 1.0f };
+		const GLfloat color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
-		// Ight let's take their formula for cool spinner
-		float f = (float)currentTime * 0.3f;
+		//// Ight let's take their formula for cool spinner
+		//float f = (float)currentTime * 0.3f;
+		//vmath::mat4 model_view_matrix =
+		//	vmath::translate(0.0f, 0.0f, -5.0f) *
+		//	vmath::translate(sinf(2.1f * f) * 0.5f, cosf(1.7f * f) * 0.5f, sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
+		//	vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
+		//	vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
+
+		float f = (float)currentTime * (float)M_PI * 0.1f;
 		vmath::mat4 model_view_matrix =
 			vmath::translate(0.0f, 0.0f, -4.0f) *
-			vmath::translate(sinf(2.1f * f) * 0.5f, cosf(1.7f * f) * 0.5f, sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
+			vmath::translate(sinf(2.1f * f) * 0.5f,
+			cosf(1.7f * f) * 0.5f,
+			sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
 			vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
 			vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
+
 
 		// Re-insert mv matrix
 		glNamedBufferSubData(
@@ -238,16 +249,40 @@ public:
 			model_view_matrix
 			);
 
-		// set input vertex attributes for vertex shader
-		const GLfloat offset[] = { (float)sin(currentTime) * 0.5f, (float)cos(currentTime) * -0.6f, 0.0f, 0.0f };
-		glVertexAttrib4fv(0, offset); // 0 = offset
+		//// set input vertex attributes for vertex shader
+		//const GLfloat offset[] = { (float)sin(currentTime) * 0.5f, (float)cos(currentTime) * -0.6f, 0.0f, 0.0f };
+		//glVertexAttrib4fv(0, offset); // 0 = offset
 
-		const GLfloat shape_color[] = { (float)sin(currentTime + M_PI) * 0.5f + 0.5f, (float)cos(currentTime + M_PI) * 0.5f + 0.5f, 0.0f, 1.0f };
-		//vec4(0.0, 0.8, 1.0, 1.0);
-		glVertexAttrib4fv(1, shape_color); // 1 = vs_color
+		//const GLfloat shape_color[] = { (float)sin(currentTime + M_PI) * 0.5f + 0.5f, (float)cos(currentTime + M_PI) * 0.5f + 0.5f, 0.0f, 1.0f };
+		////vec4(0.0, 0.8, 1.0, 1.0);
+		//glVertexAttrib4fv(1, shape_color); // 1 = vs_color
 
 		// draw triangle
 		glDrawArrays(GL_TRIANGLES, 0, 36); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
+	}
+
+	void print_arr(const GLfloat *arr, int size, int row_size) {
+		char str[64];
+
+		OutputDebugString("\nPRINTING ARR:\n");
+
+		for (int i = 0; i < size; i++) {
+			memset(str, '\0', 64);
+			if (arr[i] >= 0) {
+				str[0] = ' ';
+				sprintf(str + 1, "%.2f ", arr[i]);
+			}
+			else {
+				sprintf(str, "%.2f ", arr[i]);
+			}
+			OutputDebugString(str);
+
+			if (((i + 1) % row_size) == 0) {
+				OutputDebugString("\n");
+			}
+		}
+
+		OutputDebugString("\nDONE\n");
 	}
 
 private:
