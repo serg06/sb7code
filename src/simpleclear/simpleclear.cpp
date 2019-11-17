@@ -204,6 +204,10 @@ public:
 
 		glPointSize(5.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glEnable(GL_CULL_FACE);
+		glFrontFace(GL_CW);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
 		// use our program object for rendering
 		glUseProgram(rendering_program);
@@ -222,6 +226,7 @@ public:
 		//const GLfloat color[] = { (float)sin(currentTime) * 0.5f + 0.5f, (float)cos(currentTime) * 0.5f + 0.5f, 0.0f, 1.0f };
 		const GLfloat color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
+		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
 		//// Ight let's take their formula for cool spinner
 		//float f = (float)currentTime * 0.3f;
@@ -239,9 +244,6 @@ public:
 		//	sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
 		//	vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
 		//	vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
-
-
-
 
 		//// set input vertex attributes for vertex shader
 		//const GLfloat offset[] = { (float)sin(currentTime) * 0.5f, (float)cos(currentTime) * -0.6f, 0.0f, 0.0f };
