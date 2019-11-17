@@ -122,8 +122,8 @@ private:
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.vs.glsl", GL_VERTEX_SHADER));
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tcs.glsl", GL_TESS_CONTROL_SHADER));
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.tes.glsl", GL_TESS_EVALUATION_SHADER));
-		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.fs.glsl", GL_FRAGMENT_SHADER));
 		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.gs.glsl", GL_GEOMETRY_SHADER));
+		shader_fnames.push_back(std::make_tuple("../src/simpleclear/simple.fs.glsl", GL_FRAGMENT_SHADER));
 
 		// for each input shader
 		for (const std::tuple <std::string, GLenum> &shader_fname : shader_fnames) 
