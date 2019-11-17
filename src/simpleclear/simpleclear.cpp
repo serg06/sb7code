@@ -231,23 +231,17 @@ public:
 		//	vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
 		//	vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
 
-		float f = (float)currentTime * (float)M_PI * 0.1f;
-		vmath::mat4 model_view_matrix =
-			vmath::translate(0.0f, 0.0f, -4.0f) *
-			vmath::translate(sinf(2.1f * f) * 0.5f,
-			cosf(1.7f * f) * 0.5f,
-			sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
-			vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
-			vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
+		//float f = (float)currentTime * (float)M_PI * 0.1f;
+		//vmath::mat4 model_view_matrix =
+		//	vmath::translate(0.0f, 0.0f, -4.0f) *
+		//	vmath::translate(sinf(2.1f * f) * 0.5f,
+		//	cosf(1.7f * f) * 0.5f,
+		//	sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
+		//	vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
+		//	vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
 
 
-		// Re-insert mv matrix
-		glNamedBufferSubData(
-			uniform_buffer,
-			0,
-			sizeof(model_view_matrix),
-			model_view_matrix
-			);
+
 
 		//// set input vertex attributes for vertex shader
 		//const GLfloat offset[] = { (float)sin(currentTime) * 0.5f, (float)cos(currentTime) * -0.6f, 0.0f, 0.0f };
@@ -258,7 +252,31 @@ public:
 		//glVertexAttrib4fv(1, shape_color); // 1 = vs_color
 
 		// draw triangle
-		glDrawArrays(GL_TRIANGLES, 0, 36); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
+		//glDrawArrays(GL_TRIANGLES, 0, 36); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
+
+		// Draw 24 cubes...
+		for (int i = 0; i < 24; i++)
+		{
+			// Calculate a new model-view matrix for each one
+			float f = (float)i + (float)currentTime * 0.3f;
+			vmath::mat4 model_view_matrix =
+				vmath::translate(0.0f, 0.0f, -20.0f) *
+				vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
+				vmath::rotate((float)currentTime * 21.0f, 1.0f, 0.0f, 0.0f) *
+				vmath::translate(sinf(2.1f * f) * 2.0f,
+				cosf(1.7f * f) * 2.0f,
+				sinf(1.3f * f) * cosf(1.5f * f) * 2.0f);
+			// Update the uniform
+			glNamedBufferSubData(
+				uniform_buffer,
+				0,
+				sizeof(model_view_matrix),
+				model_view_matrix
+				);
+
+			// Draw - notice that we haven't updated the projection matrix
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 	}
 
 	void print_arr(const GLfloat *arr, int size, int row_size) {
