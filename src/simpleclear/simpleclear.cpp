@@ -55,23 +55,7 @@ public:
 	}
 
 	void startup() {
-		/*
-			Our example program will be the classic spinning cube.
-
-			We’ll create geometry representing a unit cube located at the origin and store it in buffer objects.
-
-			Then, we will use a vertex shader to apply a sequence of transforms to it to move it into world space:
-			- We will construct a basic view matrix,
-			- multiply our model and view matrices together to produce a model–view matrix,
-			- and create a perspective transformation matrix representing some of the properties of our camera.
-
-			Finally, we will pass these into a simple vertex shader using uniforms and draw the cube on the screen.
-			*/
-
-		//! We’ll create geometry representing a unit cube located at the origin and store it in buffer objects.
-
-		// cube has 6 square sides
-		// need 12 triangles to represent them!
+		// Cube at origin
 		static const GLfloat vertex_positions[] =
 		{
 			-0.25f, 0.25f, -0.25f,
@@ -123,15 +107,14 @@ public:
 			-0.25f, 0.25f, -0.25f
 		};
 
-		// useless for now, just need to have at least one VAO (Vertex Array Object) so glsl allows us to call draw-vertex functions
-		glCreateVertexArrays(1, &vertex_array_object);
-		glBindVertexArray(vertex_array_object);
+		// placeholder
+		glCreateVertexArrays(1, &vao);
+		glBindVertexArray(vao);
 
+		// compile shaders
 		rendering_program = compile_shaders();
 
-		// Create Model->View matrix in render() each time, cuz it changes with time!
-
-		// Projection matrix
+		// Simple projection matrix
 		vmath::mat4 proj_matrix = vmath::perspective(
 			40.0f, // 59.0 vfov = 90.0 hfov
 			800.0f / 600.0f,  // aspect ratio - not sure if right
@@ -139,68 +122,31 @@ public:
 			-1000.0f // our object will be closer than 100.0
 			);
 
-		// Now then, create 2 buffers: 1 for Uniform Block (transformations), 1 for input vertices.
-		GLuint buffers[2];
-		glCreateBuffers(2, buffers);
-		uniform_buffer = buffers[0];
-		vertices_buffer = buffers[1];
-
-		// HANDLE VERTEX BUFFER:
-
-		// Bind vertex array
-		glBindBuffer(GL_ARRAY_BUFFER, vertices_buffer);
-
-		// Allocate data store
-		glNamedBufferStorage(
-			vertices_buffer,
-			12 * 9 * 8, // 12 triangles, 9 floats per triangle, no more than 8 bytes per float!
-			vertex_positions, // maybe allows sizeof(vertex_positions)?
-			NULL // don't need any flags yet
-			);
-
-		// Now, bind positions element to vertex buffer
+		const GLuint uni_binding_idx = 0;
 		const GLuint attrib_idx = 0;
 		const GLuint vert_binding_idx = 0;
-		glVertexArrayAttribBinding(vertex_array_object, attrib_idx, vert_binding_idx);
 
-		// Bind buffer to that binding now
-		glVertexArrayVertexBuffer(vertex_array_object, vert_binding_idx, vertices_buffer, 0, sizeof(vmath::vec3)); // god I hope sizeof(float) works.
+		// create buffers
+		glCreateBuffers(1, &trans_buf);
+		glCreateBuffers(1, &vert_buf);
 
-		// Describe layout/format of data:
-		glVertexArrayAttribFormat(vertex_array_object, attrib_idx, 3, GL_FLOAT, GL_FALSE, 0);
+		// bind them
+		glBindBufferBase(GL_UNIFORM_BUFFER, uni_binding_idx, trans_buf); // bind trans buf to uniform buffer binding point
+		glBindBuffer(GL_ARRAY_BUFFER, vert_buf); // why?
+		glVertexArrayAttribBinding(vao, attrib_idx, vert_binding_idx); // connect vert -> position variable
 
-		// Enable auto-fill!
+		// allocate
+		glNamedBufferStorage(trans_buf, 2 * sizeof(vmath::mat4), NULL, GL_DYNAMIC_STORAGE_BIT); // allocate 2 matrices of space for transforms, and allow editing
+		glNamedBufferStorage(vert_buf, sizeof(vertex_positions), NULL, GL_DYNAMIC_STORAGE_BIT); // allocate enough for all vertices, and allow editing
+
+		// insert data (skip model-view matrix; we'll update it in render())
+		glNamedBufferSubData(trans_buf, sizeof(vmath::mat4), sizeof(vmath::mat4), proj_matrix); // proj matrix
+		glNamedBufferSubData(vert_buf, 0, sizeof(vertex_positions), vertex_positions); // vertex positions
+
+		// enable auto-filling of position
+		glVertexArrayVertexBuffer(vao, vert_binding_idx, vert_buf, 0, sizeof(vmath::vec3));
+		glVertexArrayAttribFormat(vao, attrib_idx, 3, GL_FLOAT, GL_FALSE, 0);
 		glEnableVertexAttribArray(attrib_idx);
-
-		// HANDLE UNIFORM BUFFER NOW
-
-		// Bind buffer to binding idx
-		const GLuint uni_binding_idx = 0;
-		glBindBufferBase(GL_UNIFORM_BUFFER, uni_binding_idx, uniform_buffer);
-
-		// Allocate data store
-		glNamedBufferStorage(
-			uniform_buffer,
-			12 * 9 * 8, // YOLO
-			NULL,
-			GL_DYNAMIC_STORAGE_BIT // need to write to it
-			);
-
-		// Insert mv matrix (or not lmao)
-		glNamedBufferSubData(
-			uniform_buffer,
-			0,
-			sizeof(vmath::mat4),
-			NULL
-			);
-
-		// Insert proj matrix
-		glNamedBufferSubData(
-			uniform_buffer,
-			sizeof(vmath::mat4),
-			sizeof(vmath::mat4),
-			proj_matrix
-			);
 
 		glPointSize(5.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -215,70 +161,38 @@ public:
 
 	void shutdown() {
 		// delete it all!
-		glDeleteVertexArrays(1, &vertex_array_object);
+		glDeleteVertexArrays(1, &vao);
 		glDeleteProgram(rendering_program);
-		glDeleteVertexArrays(1, &vertex_array_object); // why twice?
+		glDeleteVertexArrays(1, &vao); // why twice?
 	}
 
 	// execute shaders and actually draw on screen!
 	virtual void render(double currentTime) {
-		// fill buffer with BIG COLOURS
+		// BACKGROUND COLOUR
+
 		//const GLfloat color[] = { (float)sin(currentTime) * 0.5f + 0.5f, (float)cos(currentTime) * 0.5f + 0.5f, 0.0f, 1.0f };
 		const GLfloat color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
-		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1.0f, 0);
+		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1.0f, 0); // used for depth test somehow
 
-		//// Ight let's take their formula for cool spinner
-		//float f = (float)currentTime * 0.3f;
-		//vmath::mat4 model_view_matrix =
-		//	vmath::translate(0.0f, 0.0f, -5.0f) *
-		//	vmath::translate(sinf(2.1f * f) * 0.5f, cosf(1.7f * f) * 0.5f, sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
-		//	vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
-		//	vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
+		// MOVEMENT CALCULATION
 
-		//float f = (float)currentTime * (float)M_PI * 0.1f;
-		//vmath::mat4 model_view_matrix =
-		//	vmath::translate(0.0f, 0.0f, -4.0f) *
-		//	vmath::translate(sinf(2.1f * f) * 0.5f,
-		//	cosf(1.7f * f) * 0.5f,
-		//	sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
-		//	vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
-		//	vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
+		float f = (float)currentTime * (float)M_PI * 0.1f;
+		vmath::mat4 model_view_matrix =
+			vmath::translate(0.0f, 0.0f, -4.0f) *
+			vmath::translate(sinf(2.1f * f) * 0.5f,
+			cosf(1.7f * f) * 0.5f,
+			sinf(1.3f * f) * cosf(1.5f * f) * 2.0f) *
+			vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
+			vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
 
-		//// set input vertex attributes for vertex shader
-		//const GLfloat offset[] = { (float)sin(currentTime) * 0.5f, (float)cos(currentTime) * -0.6f, 0.0f, 0.0f };
-		//glVertexAttrib4fv(0, offset); // 0 = offset
+		// Update transformation buffer with mv matrix
+		glNamedBufferSubData(trans_buf, 0, sizeof(model_view_matrix), model_view_matrix);
 
-		//const GLfloat shape_color[] = { (float)sin(currentTime + M_PI) * 0.5f + 0.5f, (float)cos(currentTime + M_PI) * 0.5f + 0.5f, 0.0f, 1.0f };
-		////vec4(0.0, 0.8, 1.0, 1.0);
-		//glVertexAttrib4fv(1, shape_color); // 1 = vs_color
+		// DRAWING
 
-		// draw triangle
-		//glDrawArrays(GL_TRIANGLES, 0, 36); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
+		glDrawArrays(GL_TRIANGLES, 0, 36); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
 
-		// Draw 24 cubes...
-		for (int i = 0; i < 100; i++)
-		{
-			// Calculate a new model-view matrix for each one
-			float f = (float)i + (float)currentTime * 30.1f;
-			vmath::mat4 model_view_matrix =
-				vmath::translate(0.0f, 0.0f, -15.0f) *
-				vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
-				vmath::rotate((float)currentTime * 21.0f, 1.0f, 0.0f, 0.0f) *
-				vmath::translate(sinf(2.1f * f) * 4.0f,
-				cosf(1.7f * f) * 4.0f,
-				sinf(1.3f * f) * cosf(1.5f * f) * 4.0f);
-			// Update the uniform
-			glNamedBufferSubData(
-				uniform_buffer,
-				0,
-				sizeof(model_view_matrix),
-				model_view_matrix
-				);
-
-			// Draw - notice that we haven't updated the projection matrix
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
 	}
 
 	void print_arr(const GLfloat *arr, int size, int row_size) {
@@ -307,9 +221,9 @@ public:
 
 private:
 	GLuint rendering_program;
-	GLuint vertex_array_object;
-	GLuint uniform_buffer;
-	GLuint vertices_buffer;
+	GLuint vao;
+	GLuint trans_buf;
+	GLuint vert_buf;
 
 	GLuint compile_shaders(void) {
 		GLuint program;
