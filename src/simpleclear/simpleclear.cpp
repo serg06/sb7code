@@ -257,17 +257,17 @@ public:
 		//glDrawArrays(GL_TRIANGLES, 0, 36); // draw triangle using 3 VAOs, starting at the 0th one (our only one!)
 
 		// Draw 24 cubes...
-		for (int i = 0; i < 24; i++)
+		for (int i = 0; i < 100; i++)
 		{
 			// Calculate a new model-view matrix for each one
-			float f = (float)i + (float)currentTime * 0.3f;
+			float f = (float)i + (float)currentTime * 30.1f;
 			vmath::mat4 model_view_matrix =
-				vmath::translate(0.0f, 0.0f, -20.0f) *
+				vmath::translate(0.0f, 0.0f, -15.0f) *
 				vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
 				vmath::rotate((float)currentTime * 21.0f, 1.0f, 0.0f, 0.0f) *
-				vmath::translate(sinf(2.1f * f) * 2.0f,
-				cosf(1.7f * f) * 2.0f,
-				sinf(1.3f * f) * cosf(1.5f * f) * 2.0f);
+				vmath::translate(sinf(2.1f * f) * 4.0f,
+				cosf(1.7f * f) * 4.0f,
+				sinf(1.3f * f) * cosf(1.5f * f) * 4.0f);
 			// Update the uniform
 			glNamedBufferSubData(
 				uniform_buffer,
