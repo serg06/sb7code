@@ -114,6 +114,11 @@ public:
 		// compile shaders
 		rendering_program = compile_shaders();
 
+
+		/*
+		 * CUBE MOVEMENT
+		 */
+
 		// Simple projection matrix
 		vmath::mat4 proj_matrix = vmath::perspective(
 			40.0f, // 59.0 vfov = 90.0 hfov
@@ -148,6 +153,28 @@ public:
 		glVertexArrayAttribFormat(vao, attrib_idx, 3, GL_FLOAT, GL_FALSE, 0);
 		glEnableVertexAttribArray(attrib_idx);
 
+
+		/*
+		 * MINECRAFT TEXTURE
+		 */
+
+		// TODO, maybe - looks kinda hard tbh
+
+		//// create texture
+		//GLuint texGrass;
+		//glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &texGrass);
+
+		//// allocate 6 sides
+		//glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGBA32F, 16, 16);
+
+		//// bind them
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, texGrass);
+
+
+		/*
+		 * ETC
+		 */
+
 		glPointSize(5.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnable(GL_CULL_FACE);
@@ -157,6 +184,7 @@ public:
 
 		// use our program object for rendering
 		glUseProgram(rendering_program);
+
 	}
 
 	void shutdown() {
